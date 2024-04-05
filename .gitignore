@@ -1,0 +1,3 @@
+# Project exclude paths
+/chatcommon/target/
+/thread-demos/target/
