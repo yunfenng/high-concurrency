@@ -44,9 +44,9 @@ public class CreateDemo3 {
         Thread.sleep(500);
         Print.cfo(getCurThreadName() + " 让子弹飞一会儿.");
         Print.cfo(getCurThreadName() + " 做一点自己的事情.");
-        // for (int i = 0; i < COMPUTE_TIMES / 2; i++) {
-        //     int j = i * 10000;
-        // }
+        for (int i = 0; i < COMPUTE_TIMES / 2; i++) {
+            int j = i * 10000;
+        }
         Print.cfo(getCurThreadName() + " 获取并发任务的执行结果.");
 
         try {
