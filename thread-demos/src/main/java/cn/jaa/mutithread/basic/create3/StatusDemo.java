@@ -5,7 +5,6 @@ import cn.jaa.util.Print;
 import java.util.ArrayList;
 import java.util.List;
 
-import static cn.jaa.util.ThreadUtil.getCurThread;
 import static cn.jaa.util.ThreadUtil.sleepMilliSeconds;
 import static cn.jaa.util.ThreadUtil.sleepSeconds;
 
