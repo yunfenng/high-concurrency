@@ -53,6 +53,18 @@ public class CreateThreadPoolDemo {
     }
 
     /**
+     * 异步的执行目标类：执行过程中将发生异常
+     */
+    static class TargetTaskWithError extends TargetTask {
+        private String taskName;
+
+        public void run() {
+            super.run();
+            throw new RuntimeException("Error from " + taskName);
+        }
+    }
+
+    /**
      * 测试用例：只有一个线程的线程池
      */
     @Test
@@ -131,6 +143,31 @@ public class CreateThreadPoolDemo {
         sleepSeconds(1000);
         // 关闭线程池
         scheduled.shutdown();
+    }
+
+    /**
+     * 通过submit()返回的Future对象捕获异常
+     */
+    @Test
+    public void testSubmit() {
+        ScheduledExecutorService pool = Executors.newScheduledThreadPool(2);
+        pool.execute(new TargetTaskWithError());
+        /**
+         * submit(Runnable x) 返回一个future。可以用这个future来判断任务是否成功完成
+         */
+        Future future = pool.submit(new TargetTaskWithError());
+        try {
+            // 如果异常抛出，会在调用Future.get()时传递给调用者
+            if (future.get() == null) {
+                // 如果Future的返回为null，任务完成
+                Print.tco("任务完成");
+            }
+        } catch (Exception e) {
+            Print.tco(e.getCause().getMessage());
+        }
+        sleepSeconds(10);
+        // 关闭线程池
+        pool.shutdown();
     }
 
     /**
