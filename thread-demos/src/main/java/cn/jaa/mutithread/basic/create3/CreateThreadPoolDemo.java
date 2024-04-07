@@ -4,6 +4,8 @@ import cn.jaa.util.Print;
 import cn.jaa.util.RandomUtil;
 import org.junit.Test;
 
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -11,6 +13,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -323,6 +326,48 @@ public class CreateThreadPoolDemo {
             }
         };
         for (int i = 0; i < 5; i++) {
+            pool.execute(new TargetTask());
+        }
+        // 等待10秒
+        sleepSeconds(10);
+        Print.tco("关闭线程池");
+        pool.shutdown();
+    }
+
+    /**
+     * 自定义拒绝策略
+     */
+    public static class CustomIgnorePolicy implements RejectedExecutionHandler {
+        @Override
+        public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
+            // 可做日志记录等
+            Print.tco(r + " rejected; " + " - getTaskCount: " + e.getTaskCount());
+        }
+    }
+
+    @Test
+    public void testCustomIgnorePolicy() {
+        int corePoolSize = 2;       // 核心线程数
+        int maximumPoolSize = 4;    // 最大线程数
+        long keepAliveTime = 10;
+        TimeUnit unit = TimeUnit.SECONDS;
+        // 最大排队任务数
+        BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<>(2);
+        // 线程工厂
+        ThreadFactory threadFactory = new SimpleThreadFactory();
+        // 拒绝和异常策略
+        RejectedExecutionHandler policy = new CustomIgnorePolicy();
+        ThreadPoolExecutor pool = new ThreadPoolExecutor(
+                corePoolSize,
+                maximumPoolSize,
+                keepAliveTime, unit,
+                workQueue,
+                threadFactory,
+                policy);
+
+        // 预启动所有核心线程
+        pool.prestartAllCoreThreads();
+        for (int i = 0; i < 10; i++) {
             pool.execute(new TargetTask());
         }
         // 等待10秒
