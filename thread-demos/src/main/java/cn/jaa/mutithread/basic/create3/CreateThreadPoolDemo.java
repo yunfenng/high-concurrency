@@ -1,10 +1,14 @@
 package cn.jaa.mutithread.basic.create3;
 
 import cn.jaa.util.Print;
+import cn.jaa.util.RandomUtil;
 import org.junit.Test;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -127,5 +131,34 @@ public class CreateThreadPoolDemo {
         sleepSeconds(1000);
         // 关闭线程池
         scheduled.shutdown();
+    }
+
+    /**
+     * 通过submit()返回的Future对象获取结果
+     * 测试用例：获取异步调用的结果
+     */
+    @Test
+    public void testSubmit2() {
+        ScheduledExecutorService pool = Executors.newScheduledThreadPool(2);
+        Future<Integer> future = pool.submit(new Callable<Integer>() {
+            @Override
+            public Integer call() throws Exception {
+                return RandomUtil.randInRange(200, 300);
+            }
+        });
+
+        try {
+            Integer result = future.get();
+            Print.tco("异步执行的结果是:" + result);
+        } catch (InterruptedException e) {
+            Print.tco("异步调用被中断");
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            Print.tco("异步调用过程中，发生了异常");
+            e.printStackTrace();
+        }
+        sleepSeconds(10);
+        // 关闭线程池
+        pool.shutdown();
     }
 }
