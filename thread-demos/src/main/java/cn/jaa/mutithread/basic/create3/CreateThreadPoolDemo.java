@@ -250,7 +250,7 @@ public class CreateThreadPoolDemo {
 
     /**
      * 简单线程工厂类，实现 ThreadFactory 接口
-     *
+     * <p>
      * Executors 为线程池工厂类，用于快捷创建线程池（Thread Pool）；
      * ThreadFactory 为线程工厂类，用于创建线程（Thread）。
      */
@@ -278,6 +278,52 @@ public class CreateThreadPoolDemo {
         ExecutorService pool = Executors.newFixedThreadPool(2, new SimpleThreadFactory());
         for (int i = 0; i < 5; i++) {
             pool.submit(new TargetTask());
+        }
+        // 等待10秒
+        sleepSeconds(10);
+        Print.tco("关闭线程池");
+        pool.shutdown();
+    }
+
+    // 线程本地变量,用于记录线程异步任务的开始执行时间
+    private static final ThreadLocal<Long> START_TIME = new ThreadLocal<>();
+
+    /**
+     * 调度器的钩子方法
+     */
+    @Test
+    public void testHooks() {
+        ThreadPoolExecutor pool = new ThreadPoolExecutor(
+                2,
+                4,
+                60,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(2)) {
+            @Override
+            protected void beforeExecute(Thread t, Runnable target) {
+                Print.tco(target + "前钩子被执行");
+                // 记录开始执行时间
+                START_TIME.set(System.currentTimeMillis());
+                super.beforeExecute(t, target);
+            }
+
+            @Override
+            protected void afterExecute(Runnable target, Throwable t) {
+                super.afterExecute(target, t);
+                // 计算执行时长
+                long time = (System.currentTimeMillis() - START_TIME.get());
+                Print.tco(target + " 后钩子被执行, 任务执行时长（ms）：" + time);
+                // 清空本地变量
+                START_TIME.remove();
+            }
+
+            @Override
+            protected void terminated() {
+                Print.tco("调度器已经终止");
+            }
+        };
+        for (int i = 0; i < 5; i++) {
+            pool.execute(new TargetTask());
         }
         // 等待10秒
         sleepSeconds(10);
