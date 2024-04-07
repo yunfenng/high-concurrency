@@ -375,4 +375,19 @@ public class CreateThreadPoolDemo {
         Print.tco("关闭线程池");
         pool.shutdown();
     }
+
+    @org.junit.Test
+    public void testNewFixedThreadPool2() {
+        // 创建一个固定大小线程池
+        ExecutorService fixedExecutorService = Executors.newFixedThreadPool(1);
+        ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) fixedExecutorService;
+        Print.tco(threadPoolExecutor.getMaximumPoolSize());
+        // 设置核心线程数
+        threadPoolExecutor.setCorePoolSize(8);
+
+        // 创建一个单线程化的线程池
+        ExecutorService singleExecutorService = Executors.newSingleThreadExecutor();
+        // 转换成普通线程池， 会抛出运行时异常 java.lang.ClassCastException
+        ((ThreadPoolExecutor) singleExecutorService).setCorePoolSize(8);
+    }
 }
