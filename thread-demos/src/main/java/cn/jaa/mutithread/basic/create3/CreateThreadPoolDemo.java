@@ -12,6 +12,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -204,18 +205,18 @@ public class CreateThreadPoolDemo {
 
     /**
      * 错误的线程池配置示例
-     *
+     * <p>
      * 示例创建了最大线程数量maximumPoolSize为100的线程池，仅仅向其中提交了5个任务
      * 理论上，这5个任务都会被执行到，奇怪的是示例中只有1个任务在执行，其他的4个任务都在等待。
      * 其他任务被加入到了阻塞队列中，需要等pool-1-thread-1线程执行完第一个任务后，才能依次从阻塞队列取出执行。
      * 但是，实例中的第一个任务是一个永远也没有办法完成的任务，所以其他的4个任务只能永远在阻塞队列中等待着。
      * 由于参数配置得不合理，因此出现了以上的奇怪现象。
-     *
+     * <p>
      * 为什么会出现上面的奇怪现象呢？
      * 因为例子中的corePoolSize为1，阻塞队列的大小为100，
      * 按照线程创建的规则，需要等阻塞队列已满，才会去创建新的线程。
      * 例子中加入了5个任务，阻塞队列大小为4（<100），所以线程池的调度器不会去创建新的线程，后面的4个任务只能等待。
-     *
+     * <p>
      * （1）核心和最大线程数量、BlockingQueue队列等参数如果配置得不合理，可能会造成异步任务得不到预期的并发执行，造成严重的排队等待现象。
      * （2）线程池的调度器创建线程的一条重要的规则是：在corePoolSize已满之后，还需要等阻塞队列已满，才会去创建新的线程。
      */
@@ -245,5 +246,42 @@ public class CreateThreadPoolDemo {
             Print.tco("- activeCount:" + executor.getActiveCount() + " - taskCount:" + executor.getTaskCount());
             sleepSeconds(1);
         }
+    }
+
+    /**
+     * 简单线程工厂类，实现 ThreadFactory 接口
+     *
+     * Executors 为线程池工厂类，用于快捷创建线程池（Thread Pool）；
+     * ThreadFactory 为线程工厂类，用于创建线程（Thread）。
+     */
+    public static class SimpleThreadFactory implements ThreadFactory {
+
+        static AtomicInteger threadNo = new AtomicInteger(0);
+
+        @Override
+        public Thread newThread(Runnable target) {
+            String threadName = "simpleThread-" + threadNo.get();
+            Print.tco("创建一条线程，名称为：" + threadName);
+            threadNo.incrementAndGet();
+            Thread thread = new Thread(target, threadName);
+            thread.setDaemon(true);
+            return thread;
+        }
+    }
+
+    /**
+     * 线程工厂的测试用例
+     */
+    @Test
+    public void testThreadFactory() {
+        // 使用自定义线程工厂，快捷创建一个固定大小的线程池
+        ExecutorService pool = Executors.newFixedThreadPool(2, new SimpleThreadFactory());
+        for (int i = 0; i < 5; i++) {
+            pool.submit(new TargetTask());
+        }
+        // 等待10秒
+        sleepSeconds(10);
+        Print.tco("关闭线程池");
+        pool.shutdown();
     }
 }
