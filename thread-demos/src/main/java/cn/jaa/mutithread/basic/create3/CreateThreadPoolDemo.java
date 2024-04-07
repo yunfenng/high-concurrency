@@ -9,7 +9,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -197,5 +200,50 @@ public class CreateThreadPoolDemo {
         sleepSeconds(10);
         // 关闭线程池
         pool.shutdown();
+    }
+
+    /**
+     * 错误的线程池配置示例
+     *
+     * 示例创建了最大线程数量maximumPoolSize为100的线程池，仅仅向其中提交了5个任务
+     * 理论上，这5个任务都会被执行到，奇怪的是示例中只有1个任务在执行，其他的4个任务都在等待。
+     * 其他任务被加入到了阻塞队列中，需要等pool-1-thread-1线程执行完第一个任务后，才能依次从阻塞队列取出执行。
+     * 但是，实例中的第一个任务是一个永远也没有办法完成的任务，所以其他的4个任务只能永远在阻塞队列中等待着。
+     * 由于参数配置得不合理，因此出现了以上的奇怪现象。
+     *
+     * 为什么会出现上面的奇怪现象呢？
+     * 因为例子中的corePoolSize为1，阻塞队列的大小为100，
+     * 按照线程创建的规则，需要等阻塞队列已满，才会去创建新的线程。
+     * 例子中加入了5个任务，阻塞队列大小为4（<100），所以线程池的调度器不会去创建新的线程，后面的4个任务只能等待。
+     *
+     * （1）核心和最大线程数量、BlockingQueue队列等参数如果配置得不合理，可能会造成异步任务得不到预期的并发执行，造成严重的排队等待现象。
+     * （2）线程池的调度器创建线程的一条重要的规则是：在corePoolSize已满之后，还需要等阻塞队列已满，才会去创建新的线程。
+     */
+    @Test
+    public void testThreadPoolExecutor() {
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(
+                1,
+                100,
+                100,
+                TimeUnit.MILLISECONDS,
+                new LinkedBlockingDeque<>(100));
+        for (int i = 0; i < 5; i++) {
+            final int taskIndex = i;
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    Print.tco("taskIndex = " + taskIndex);
+                    try {
+                        Thread.sleep(Long.MAX_VALUE);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+        while (true) {
+            Print.tco("- activeCount:" + executor.getActiveCount() + " - taskCount:" + executor.getTaskCount());
+            sleepSeconds(1);
+        }
     }
 }
