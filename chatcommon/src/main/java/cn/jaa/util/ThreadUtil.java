@@ -227,6 +227,11 @@ public class ThreadUtil {
         return className;
     }
 
+    /**
+     * 优雅地关闭线程池
+     *
+     * @param threadPool
+     */
     public static void shutdownThreadPoolGracefully(ExecutorService threadPool) {
         if (!(threadPool instanceof ExecutorService) || threadPool.isTerminated()) {
             return;
