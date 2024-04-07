@@ -79,5 +79,20 @@ public class CreateThreadPoolDemo {
         // 关闭线程池
         pool.shutdown();
     }
+
+    /**
+     * 测试用例：“可缓存线程池”
+     */
+    @Test
+    public void testNewCacheThreadPool() {
+        ExecutorService pool = Executors.newCachedThreadPool();
+        for (int i = 0; i < 5; i++) {
+            pool.execute(new TargetTask());
+            pool.submit(new TargetTask());
+        }
+        sleepSeconds(1000);
+        // 关闭线程池
+        pool.shutdown();
+    }
     
 }
