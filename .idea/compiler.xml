@@ -9,6 +9,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="chatcommon" />
         <module name="thread-demos" />
+        <module name="lock-demos" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="8" />
