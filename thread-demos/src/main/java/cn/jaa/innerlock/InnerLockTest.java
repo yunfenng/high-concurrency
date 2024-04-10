@@ -133,4 +133,67 @@ public class InnerLockTest {
         Print.tcfo("释放锁后, lock 的状态: ");
         lock.printObjectStruct();
     }
+
+    /**
+     * 重量级锁案例演示
+     */
+    @Test
+    public void showHeavyweightLock() throws InterruptedException {
+        Print.tcfo(VM.current().details());
+        // JVM延迟偏向锁
+        sleepMilliSeconds(5000);
+        ObjectLock counter = new ObjectLock();
+        Print.tcfo("抢占锁前, lock 的状态: ");
+        counter.printObjectStruct();
+
+        sleepMilliSeconds(5000);
+        CountDownLatch latch = new CountDownLatch(3);
+        Runnable runnable = () -> {
+            for (int i = 0; i < MAX_TURN; i++) {
+                synchronized (counter) {
+                    counter.increase();
+                    if (i == 0) {
+                        Print.tcfo("第一个线程占有锁, counter 的状态: ");
+                        counter.printObjectStruct();
+                    }
+                }
+            }
+            // 循环完毕
+            latch.countDown();
+            // 线程虽然释放锁，但是一直存在
+            for (int j = 0; ; j++) {
+                // 每一次循环等待1ms
+                sleepMilliSeconds(1);
+            }
+        };
+        new Thread(runnable).start();
+
+        sleepMilliSeconds(1000); // 等待1s
+
+        Runnable lightweightRunnable = () -> {
+            for (int i = 0; i < MAX_TURN; i++) {
+                synchronized (counter) {
+                    counter.increase();
+                    if (i == 0) {
+                        Print.tcfo("占有锁, counter 的状态: ");
+                        counter.printObjectStruct();
+                    }
+                    // 每一次循环等待1ms
+                    sleepMilliSeconds(1);
+                }
+            }
+            // 循环完毕
+            latch.countDown();
+        };
+        // 启动两个线程，开始激烈地抢锁
+        new Thread(lightweightRunnable, "抢锁线程1").start();
+        sleepMilliSeconds(100);  // 等待100毫秒
+        new Thread(lightweightRunnable, "抢锁线程2").start();
+
+        // 等待加锁线程执行完成
+        latch.await();
+        sleepMilliSeconds(2000);  // 等待2s
+        Print.tcfo("释放锁后, counter 的状态: ");
+        counter.printObjectStruct();
+    }
 }
