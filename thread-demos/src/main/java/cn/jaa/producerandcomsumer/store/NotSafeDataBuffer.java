@@ -1,4 +1,4 @@
-package cn.jaa.mutithread.producerandcomsumer.store;
+package cn.jaa.producerandcomsumer.store;
 
 import cn.jaa.util.Print;
 

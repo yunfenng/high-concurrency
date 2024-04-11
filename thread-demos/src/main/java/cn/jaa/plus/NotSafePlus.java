@@ -1,4 +1,4 @@
-package cn.jaa.mutithread.plus;
+package cn.jaa.plus;
 
 /**
  * @Author: Jaa

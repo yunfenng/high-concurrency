@@ -1,7 +1,7 @@
-package cn.jaa.mutithread.producerandcomsumer.store;
+package cn.jaa.producerandcomsumer.store;
 
-import cn.jaa.mutithread.producerandcomsumer.goods.Goods;
-import cn.jaa.mutithread.producerandcomsumer.goods.IGoods;
+import cn.jaa.producerandcomsumer.goods.Goods;
+import cn.jaa.producerandcomsumer.goods.IGoods;
 import cn.jaa.petstore.actor.Consumer;
 import cn.jaa.petstore.actor.Producer;
 import cn.jaa.util.JvmUtil;

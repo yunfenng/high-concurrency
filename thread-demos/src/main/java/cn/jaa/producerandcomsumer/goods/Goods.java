@@ -1,4 +1,4 @@
-package cn.jaa.mutithread.producerandcomsumer.goods;
+package cn.jaa.producerandcomsumer.goods;
 
 import cn.jaa.util.RandomUtil;
 

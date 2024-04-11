@@ -1,7 +1,7 @@
-package cn.jaa.mutithread.producerandcomsumer.store;
+package cn.jaa.producerandcomsumer.store;
 
-import cn.jaa.mutithread.producerandcomsumer.goods.Goods;
-import cn.jaa.mutithread.producerandcomsumer.goods.IGoods;
+import cn.jaa.producerandcomsumer.goods.Goods;
+import cn.jaa.producerandcomsumer.goods.IGoods;
 import cn.jaa.petstore.actor.Consumer;
 import cn.jaa.petstore.actor.Producer;
 
@@ -14,38 +14,35 @@ import java.util.concurrent.Executors;
  * @Description:
  * @Date 2024/4/9
  */
-public class SafePetStore<T> {
+public class NotSafePetStore {
 
-    // 共享数据区，实例对象
-    private static SafeDataBuffer<IGoods> safeDataBuffer = new SafeDataBuffer();
-
+    // 数据缓存区静态实例
+    private static NotSafeDataBuffer<IGoods> notSafeDataBuffer = new NotSafeDataBuffer<>();
     // 生产者执行的动作
     static Callable<IGoods> produceAction = () -> {
         // 首先生成一个随机的商品
         IGoods goods = Goods.produceOne();
-        // 将商品加上共享数据区
         try {
-            safeDataBuffer.add(goods);
+            notSafeDataBuffer.add(goods);
         } catch (Exception e) {
             e.printStackTrace();
         }
         return goods;
     };
+
     // 消费者执行的动作
-    static Callable<IGoods> consumerAction = () ->
-    {
+    static Callable<IGoods> consumeAction = () -> {
         // 从PetStore获取商品
         IGoods goods = null;
         try {
-            goods = safeDataBuffer.fetch();
+            goods = notSafeDataBuffer.fetch();
         } catch (Exception e) {
             e.printStackTrace();
         }
         return goods;
     };
 
-
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
         System.setErr(System.out);
 
         // 同时并发执行的线程数
@@ -56,7 +53,7 @@ public class SafePetStore<T> {
             // 生产者线程每生产一个商品，间隔500ms
             threadPool.submit(new Producer(produceAction, 500));
             // 消费者线程每消费一个商品，间隔1500ms
-            threadPool.submit(new Consumer(consumerAction, 1500));
+            threadPool.submit(new Consumer(consumeAction, 1500));
         }
     }
 }

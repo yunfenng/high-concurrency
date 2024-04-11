@@ -1,4 +1,4 @@
-package cn.jaa.mutithread.plus;
+package cn.jaa.plus;
 
 import cn.jaa.util.Print;
 import org.junit.Test;
