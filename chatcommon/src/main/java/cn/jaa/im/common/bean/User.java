@@ -13,6 +13,7 @@ import java.io.Serializable;
 public class User implements Serializable {
     private String uid;         // 用户id
     private String nickName;    // 昵称
+    public volatile int age;    // 年龄
 
     public User(String uid, String nickName) {
         this.uid = uid;
@@ -24,6 +25,7 @@ public class User implements Serializable {
         return "User{" +
                 "uid='" + getUid() + '\'' +
                 ", nickName='" + getNickName() + '\'' +
+                ", age=" + age +
                 '}';
     }
 }

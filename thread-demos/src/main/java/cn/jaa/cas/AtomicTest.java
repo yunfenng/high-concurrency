@@ -8,6 +8,7 @@ import org.junit.Test;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -108,4 +109,19 @@ public class AtomicTest {
         Print.tco(" cas result is:" + success);
         Print.tco(" after cas,userRef is:" + userRef.get());
     }
+
+    /**
+     * 属性更新原子类 AtomicIntegerFieldUpdater 测试
+     */
+    @Test
+    public void testAtomicIntegerFieldUpdater() throws InterruptedException {
+        // 使用静态方法 newUpdater() 创建一个更新器 updater
+        AtomicIntegerFieldUpdater<User> a = AtomicIntegerFieldUpdater.newUpdater(User.class, "age");
+        User user = new User("1", "张三");
+        // 使用属性更新器的 getAndIncrement、getAndAdd 增加 user 的 age 值
+        Print.tco(a.getAndIncrement(user)); // 0
+        Print.tco(a.getAndAdd(user, 100)); // 1
+        Print.tco(a.get(user)); // 101
+    }
+
 }
