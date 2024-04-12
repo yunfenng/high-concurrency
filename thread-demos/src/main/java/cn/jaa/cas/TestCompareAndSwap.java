@@ -3,6 +3,8 @@ package cn.jaa.cas;
 import cn.jaa.util.JvmUtil;
 import cn.jaa.util.Print;
 import cn.jaa.util.ThreadUtil;
+import org.junit.Test;
+import org.openjdk.jol.info.ClassLayout;
 import sun.misc.Unsafe;
 
 import java.util.concurrent.CountDownLatch;
@@ -85,5 +87,30 @@ public class TestCompareAndSwap {
             Print.tco("失败次数：" + cas.failure.get());
         }
     }
+
+    @Test
+    public void printObjectStruct() {
+        // 创建一个对象
+        OptimisticLockingPlus object = new OptimisticLockingPlus();
+        // 给成员赋值
+        object.value = 100;
+        // 通过JOL工具输出内存布局
+        String printable = ClassLayout.parseInstance(object).toPrintable();
+        Print.fo("object = " + printable);
+    }
+
+    // 从JOL输出的结果可以看出，一个TestCompareAndSwap对象的Object Header占用了12字节，
+    // 而value属性的内存位置紧挨在Object Header之后，所以value属性的相对偏移量值为12
+
+    // 08:49:52.300 [main] INFO cn.jaa.threadpool.SeqOrScheduledTargetThreadPoolLazyHolder - 线程池已经初始化
+    // [main]：valueOffset:=12
+    // [TestCompareAndSwap.printObjectStruct]：object = cn.jaa.cas.TestCompareAndSwap$OptimisticLockingPlus object internals:
+    // OFFSET  SIZE   TYPE DESCRIPTION                               VALUE
+    //     0     4    (object header)                           01 00 00 00 (00000001 00000000 00000000 00000000) (1)
+    //     4     4    (object header)                           00 00 00 00 (00000000 00000000 00000000 00000000) (0)
+    //     8     4    (object header)                           f4 31 01 f8 (11110100 00110001 00000001 11111000) (-134139404)
+    //     12    4    int OptimisticLockingPlus.value               100
+    // Instance size: 16 bytes
+    // Space losses: 0 bytes internal + 0 bytes external = 0 bytes total
 
 }
