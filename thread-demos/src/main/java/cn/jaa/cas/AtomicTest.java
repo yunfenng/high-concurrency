@@ -1,8 +1,10 @@
 package cn.jaa.cas;
 
 import cn.jaa.util.Print;
+import cn.jaa.util.ThreadUtil;
 import org.junit.Test;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -11,6 +13,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @Date 2024/4/12
  */
 public class AtomicTest {
+
+    private static final int THREAD_COUNT = 10;
 
     /**
      * 基础原子类 AtomicInteger 的使用示例
@@ -38,5 +42,22 @@ public class AtomicTest {
         boolean flag = i.compareAndSet(9, 100);
         // 输出
         Print.fo("flag:" + flag + ";  i:" + i.get()); // flag:true;  i:100
+    }
+
+    // 10个线程自增10000
+    public static void main(String[] args) throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(THREAD_COUNT);
+        AtomicInteger atomicInteger = new AtomicInteger(0);
+        for (int i = 0; i < THREAD_COUNT; i++) {
+            // 创建10个线程,模拟多线程环境
+            ThreadUtil.getMixedTargetThreadPool().submit(() -> {
+                for (int j = 0; j < 1000; j++) {
+                    atomicInteger.getAndIncrement();
+                }
+                latch.countDown();
+            });
+        }
+        latch.await();
+        Print.tco("累加之和: " + atomicInteger.get());
     }
 }
