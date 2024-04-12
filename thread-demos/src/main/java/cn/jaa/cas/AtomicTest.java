@@ -1,5 +1,6 @@
 package cn.jaa.cas;
 
+import cn.jaa.im.common.bean.User;
 import cn.jaa.util.Print;
 import cn.jaa.util.ThreadUtil;
 import org.junit.Test;
@@ -7,6 +8,7 @@ import org.junit.Test;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @Author: Jaa
@@ -88,4 +90,22 @@ public class AtomicTest {
         Print.fo("tempValue:" + tempValue + ";  i:" + i);
     }
 
+    /**
+     * 引用类型原子类 AtomicReference 测试
+     */
+    @Test
+    public void testAtomicReference() {
+        // 包装的原子对象
+        AtomicReference<User> userRef = new AtomicReference<>();
+        User user = new User("1", "张三");
+        userRef.set(user);
+        Print.tco("userRef is " + userRef.get());
+
+        // 要使用CAS替换的User对象
+        User updateUser = new User("2", "李四");
+        // 使用CAS替换
+        boolean success = userRef.compareAndSet(user, updateUser);
+        Print.tco(" cas result is:" + success);
+        Print.tco(" after cas,userRef is:" + userRef.get());
+    }
 }
