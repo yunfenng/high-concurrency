@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 
 /**
  * @Author: Jaa
@@ -60,4 +61,31 @@ public class AtomicTest {
         latch.await();
         Print.tco("累加之和: " + atomicInteger.get());
     }
+
+    /**
+     * 数组原子类 AtomicIntegerArray 的使用示例
+     */
+    @Test
+    public void testAtomicIntegerArray() {
+        int tempValue = 0;
+        int[] array = {1, 2, 3, 4, 5, 6};
+        // 定义一个整数数组原子类实例，赋值到变量 i
+        AtomicIntegerArray i = new AtomicIntegerArray(array);
+
+        // 获取第0个元素，然后设置为2
+        tempValue = i.getAndSet(0, 2);
+        // tempValue:1;  i:[2, 2, 3, 4, 5, 6]
+        Print.fo("tempValue:" + tempValue + ";  i:" + i);
+
+        // 获取第0个元素，然后自增
+        tempValue = i.getAndIncrement(0);
+        // tempValue:2;  i:[3, 2, 3, 4, 5, 6]
+        Print.fo("tempValue:" + tempValue + ";  i:" + i);
+
+        // 获取第0个元素，然后增加一个delta 5
+        tempValue = i.getAndAdd(0, 5);
+        // tempValue:3;  i:[8, 2, 3, 4, 5, 6]
+        Print.fo("tempValue:" + tempValue + ";  i:" + i);
+    }
+
 }
