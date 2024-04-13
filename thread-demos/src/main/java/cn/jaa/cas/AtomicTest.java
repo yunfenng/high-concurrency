@@ -9,6 +9,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.concurrent.atomic.AtomicMarkableReference;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicStampedReference;
 
@@ -177,6 +178,64 @@ public class AtomicTest {
             }
         });
         latch.await();
+    }
+
+    /**
+     * 使用 AtomicMarkableReference 解决 ABA问题
+     */
+    @Test
+    public void testAtomicMarkableReference() throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(2);
+        AtomicMarkableReference<Integer> atomicRef = new AtomicMarkableReference<>(1, false);
+        ThreadUtil.getMixedTargetThreadPool().submit(new Runnable() {
+            @Override
+            public void run() {
+                boolean success = false;
+                Integer value = atomicRef.getReference();
+                boolean mark = getMark(atomicRef);
+                Print.tco("before sleep 500: value=" + value + " mark=" + mark);
+                // 等待500毫秒
+                sleepMilliSeconds(500);
+                success = atomicRef.compareAndSet(1, 10, mark, !mark);
+                Print.tco("after sleep 500 cas 1: success=" + success
+                        + " value=" + atomicRef.getReference()
+                        + " mark=" + getMark(atomicRef));
+
+                latch.countDown();
+            }
+        });
+
+        ThreadUtil.getMixedTargetThreadPool().submit(new Runnable() {
+            @Override
+            public void run() {
+                boolean success = false;
+                int value = atomicRef.getReference();
+                boolean mark = getMark(atomicRef);
+                Print.tco("before sleep 1000: value=" + atomicRef.getReference() + " mark=" + mark);
+
+                // 等待1000毫秒
+                sleepMilliSeconds(1000);
+                Print.tco("after sleep 1000: mark = " + getMark(atomicRef));
+                success = atomicRef.compareAndSet(1, 20, mark, !mark);
+                Print.tco("after cas 3 1000: success=" + success
+                        + " value=" + atomicRef.getReference()
+                        + " mark=" + getMark(atomicRef));
+                latch.countDown();
+            }
+        });
+        latch.await();
+    }
+
+    /**
+     * 获取修改标志值
+     *
+     * @param atomicRef
+     * @return
+     */
+    private boolean getMark(AtomicMarkableReference<Integer> atomicRef) {
+        boolean[] markHolder = {false};
+        Integer value = atomicRef.get(markHolder);
+        return markHolder[0];
     }
 
 }
