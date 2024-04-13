@@ -10,6 +10,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicStampedReference;
+
+import static cn.jaa.util.ThreadUtil.sleepMilliSeconds;
 
 /**
  * @Author: Jaa
@@ -122,6 +125,58 @@ public class AtomicTest {
         Print.tco(a.getAndIncrement(user)); // 0
         Print.tco(a.getAndAdd(user, 100)); // 1
         Print.tco(a.get(user)); // 101
+    }
+
+    /**
+     * 使用 AtomicStampedReference 解决 ABA 问题
+     */
+    @Test
+    public void testAtomicStampedReference() throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(2);
+        AtomicStampedReference<Integer> atomicStampedRef = new AtomicStampedReference<>(1, 0);
+        ThreadUtil.getMixedTargetThreadPool().submit(new Runnable() {
+            @Override
+            public void run() {
+                boolean success = false;
+                int stamp = atomicStampedRef.getStamp();
+                Print.tco("before sleep 500: value=" + atomicStampedRef.getReference()
+                        + " stamp=" + atomicStampedRef.getStamp());
+                sleepMilliSeconds(500);
+                success = atomicStampedRef.compareAndSet(
+                        1,   // 原CAS中的原参数
+                        10,      // 要替换后的新参数
+                        stamp,                // 原CAS数据旧的版本号
+                        stamp + 1); // 替换后的版本号
+                Print.tco("after sleep 500 cas 1: success=" + success
+                        + " value=" + atomicStampedRef.getReference()
+                        + " stamp=" + atomicStampedRef.getStamp());
+                stamp++;
+                success = atomicStampedRef.compareAndSet(10, 1, stamp, stamp + 1);
+                Print.tco("after  sleep 500 cas 2: success=" + success
+                        + " value=" + atomicStampedRef.getReference()
+                        + " stamp=" + atomicStampedRef.getStamp());
+                latch.countDown();
+            }
+        });
+
+        ThreadUtil.getMixedTargetThreadPool().submit(new Runnable() {
+            @Override
+            public void run() {
+                boolean success = false;
+                int stamp = atomicStampedRef.getStamp();
+                Print.tco("before sleep 1000: value=" + atomicStampedRef.getReference()
+                        + " stamp=" + atomicStampedRef.getStamp());
+                sleepMilliSeconds(1000);
+                success = atomicStampedRef.compareAndSet(1, 20, stamp, stamp + 1);
+                Print.tco("after sleep 1000: stamp = " + atomicStampedRef.getStamp());
+                success = atomicStampedRef.compareAndSet(1, 20, stamp, stamp++);
+                Print.tco("after cas 3 1000: success=" + success
+                        + " value=" + atomicStampedRef.getReference()
+                        + " stamp=" + atomicStampedRef.getStamp());
+                latch.countDown();
+            }
+        });
+        latch.await();
     }
 
 }
